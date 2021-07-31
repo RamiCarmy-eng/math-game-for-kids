@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <item name="scoreResult" type="id"></item>
+    <item name="button1" type="id"></item>
+    <item name="btnAdd" type="id"></item>
+    <item name="btnSubstract" type="id"></item>
+    <item name="btnShowAnswer" type="id"></item>
+    <item name="btnMultiply" type="id"></item>
+    <item name="btnDivide" type="id"></item>
+    <item name="btnAddLevel" type="id"></item>
+</resources>
