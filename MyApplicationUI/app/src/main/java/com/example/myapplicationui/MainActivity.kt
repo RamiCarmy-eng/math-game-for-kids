@@ -3,13 +3,12 @@ package com.example.myapplicationui
 import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log.e
 import android.view.View
 import kotlin.random.Random
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.TextView
-import org.w3c.dom.Text
 
 
 class MainActivity() : AppCompatActivity(), View.OnClickListener {
@@ -19,18 +18,19 @@ class MainActivity() : AppCompatActivity(), View.OnClickListener {
     lateinit var operator: TextView
     lateinit var num1: TextView
     lateinit var num2: TextView
-    lateinit var answer: TextView
+    lateinit var answer: EditText
 
     //Buttons
     lateinit var btnAdd: Button
     lateinit var btnSubstract: Button
     lateinit var btnMultiply: Button
     lateinit var btnDivide: Button
-    lateinit var btnReset: Button
     lateinit var btnShowAnswer: Button
-    lateinit var resetLevel: Button
+    lateinit var btnAddLevel: ImageButton
+    lateinit var btnResetLevel: ImageButton
     lateinit var showCorrectAnswer: TextView
     lateinit var level1: TextView
+    lateinit var btnChack: ImageButton
 
     //Varianles
     var score: Int = 0
@@ -39,39 +39,39 @@ class MainActivity() : AppCompatActivity(), View.OnClickListener {
     var level: Int = 1
     var A: Int = 0
     var B: Int = 0
-
-    //
+    var currentAction : MathActionType = MathActionType.ADD
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        scoreResult = findViewById(R.id.scoreResult)
+        scoreResult = findViewById(R.id.score_result)
         btnShowAnswer = findViewById(R.id.btnShowAnswer)
         btnAdd = findViewById(R.id.btnAdd)
         btnSubstract = findViewById(R.id.btnSubstract)
         btnMultiply = findViewById(R.id.btnMultiply)
         btnDivide = findViewById(R.id.btnDivide)
-        btnReset = findViewById(R.id.btnAddLevel)
-        textScore = findViewById(R.id.textScore)
-        level1 = findViewById(R.id.level1)
+        textScore = findViewById(R.id.score_title)
+        level1 = findViewById(R.id.level)
         operator = findViewById(R.id.operator)
         num1 = findViewById(R.id.num1)
         num2 = findViewById(R.id.num2)
-        resetLevel = findViewById(R.id.restLevel)
+        btnAddLevel = findViewById(R.id.btnAddLevel)
+        btnResetLevel = findViewById(R.id.btnRestLevel)
         showCorrectAnswer = findViewById(R.id.correctAnswerView)
-        answer = findViewById(R.id.editTextNumber2) as TextView
-
-
+        answer = findViewById(R.id.user_answer)
+        btnChack = findViewById(R.id.check_button)
         btnAdd.setOnClickListener(this)
         btnSubstract.setOnClickListener(this)
         btnShowAnswer.setOnClickListener(this)
-        btnReset.setOnClickListener(this)
         btnMultiply.setOnClickListener(this)
         btnDivide.setOnClickListener(this)
         level1.setOnClickListener(this)
-        resetLevel.setOnClickListener(this)
-        answer.setOnClickListener(this)
+        btnResetLevel.setOnClickListener(this)
+        btnAddLevel.setOnClickListener(this)
+        btnChack.setOnClickListener(this)
+
+        startGame()
 
     }
 
@@ -90,111 +90,168 @@ class MainActivity() : AppCompatActivity(), View.OnClickListener {
         if(result==correctAnswer.toString()) {
             score++
             scoreResult.text = score.toString()
-            showCorrectAnswer.setText("")
-            answer.setBackgroundColor(Color.GREEN);
             return true
+        } else {
+            score--
+            scoreResult.text = score.toString()
+            return false
         }
-        answer.setBackgroundColor(Color.GREEN);
-        return false
+
 
     }
 
     override fun onClick(v: View) {
-        var start: Int = 0
-        var end: Int = endNNumber(level)
-
         when (v.id) {
+            R.id.btnAdd -> { chooseAdd() }
+            R.id.btnSubstract ->{ chooseSubtract() }
+            R.id.btnDivide ->{ chooseDivide() }
+            R.id.btnMultiply ->{ chooseMultiply() }
+            R.id.btnAddLevel ->{ addLevel() }
+            R.id.btnRestLevel ->{ resetLevel() }
+            R.id.btnShowAnswer ->{ showAnswer() }
+            R.id.check_button -> { onUserAnswer() }
+        }
+    }
 
-            R.id.btnAdd -> {
+    private fun startGame() {
+        startNextExt()
+        answer.requestFocus()
+    }
 
-                showCorrectAnswer.setText("")
-                operator.setText("+")
-                A = rand(start, end)
-                if (A != end) {
-                    while (B <= end) {
-                        B = rand(start, end)
-                        if ((A + B) <= end) {
-                            correctAnswer = A + B
-                            break
-                        }
+    private fun startNextExt() {
+        when (currentAction) {
+            MathActionType.ADD -> chooseAdd()
+            MathActionType.SUBTRACT -> chooseSubtract()
+            MathActionType.MULTIPLE -> chooseMultiply()
+            MathActionType.DIVIDE -> chooseDivide()
+        }
+    }
 
-                    }
-                    num1.setText(A.toString())
-                    num2.setText(B.toString())
-                    answer.text = ""
+    private fun chooseAdd() {
+        clearAnswerView()
+
+        val start: Int = 0
+        val end: Int = endNNumber(level)
+
+        operator.setText("+")
+        A = rand(start, end)
+        if (A != end) {
+            while (B <= end) {
+                B = rand(start, end)
+                if ((A + B) <= end) {
+                    correctAnswer = A + B
+                    break
                 }
-            }
-            R.id.btnSubstract ->{
-                showCorrectAnswer.setText("")
-                operator.setText("-")
-                A = rand(start, end)
-                if (A != end) {
-                    B = rand(start, A)
-                    correctAnswer = A - B
-                }
-                    num1.setText(A.toString())
-                    num2.setText(B.toString())
-                    answer.text = ""
 
             }
-            R.id.btnDivide ->{
-                showCorrectAnswer.setText("")
-                operator.setText("/")
-                A = rand(start, end)
-                var finish: Boolean=true
-                while (finish) {
-                    B = rand(1, A)
-                    correctAnswer = A / B
-                    if((A.rem(B))==0){
-                        finish=false
-                    }
-                }
-                num1.setText(A.toString())
-                num2.setText(B.toString())
-                answer.text = ""
+            num1.setText(A.toString())
+            num2.setText(B.toString())
 
-            }
-            R.id.btnMultiply ->{
-                showCorrectAnswer.setText("")
-                operator.setText("*")
-                A = rand(start, end)
-                var finish: Boolean=true
-                while (finish) {
-                    B = rand(0, end)
-                    correctAnswer = A * B
-                    if((A*B)<=end){
-                        finish=false
-                    }
-                }
-                num1.setText(A.toString())
-                num2.setText(B.toString())
-                answer.text = ""
+            currentAction = MathActionType.ADD
+        }
+    }
 
-            }
-            R.id.btnAddLevel ->{
-                    showCorrectAnswer.setText("")
-                    level++
-                    level1.text = level.toString()
-            }
-            R.id.restLevel ->{
-                    level = 1
-                    level1.text = "1"
-            }
+    private fun chooseSubtract() {
+        clearAnswerView()
 
-            R.id.btnShowAnswer ->{
-                    showCorrectAnswer.setText(correctAnswer.toString())
-            }
+        val start: Int = 0
+        val end: Int = endNNumber(level)
 
-            R.id.editTextNumber2 ->{
-                var changeColor:Boolean=updateScore()
-                if (changeColor==false){
-                    answer.setBackgroundColor(Color.RED);
-                }else{
-                    answer.setBackgroundColor(Color.GREEN);
-                }
-            }
+        operator.setText("-")
+        A = rand(start, end)
+        if (A != end) {
+            B = rand(start, A)
+            correctAnswer = A - B
+        }
+        num1.setText(A.toString())
+        num2.setText(B.toString())
 
+        currentAction = MathActionType.SUBTRACT
+    }
+
+    private fun chooseDivide(){
+        clearAnswerView()
+
+        val start: Int = 0
+        val end: Int = endNNumber(level)
+
+        showCorrectAnswer.setText("")
+        operator.setText("/")
+        A = rand(start, end)
+        var finish: Boolean=true
+        while (finish) {
+            B = rand(1, A)
+            correctAnswer = A / B
+            if((A.rem(B))==0){
+                finish=false
+            }
+        }
+        num1.setText(A.toString())
+        num2.setText(B.toString())
+
+        currentAction = MathActionType.DIVIDE
+    }
+
+    private fun chooseMultiply() {
+        clearAnswerView()
+
+        val start: Int = 0
+        val end: Int = endNNumber(level)
+
+        showCorrectAnswer.setText("")
+        operator.setText("*")
+        A = rand(start, end)
+        var finish: Boolean=true
+        while (finish) {
+            B = rand(0, end)
+            correctAnswer = A * B
+            if((A*B)<=end){
+                finish=false
+            }
+        }
+        num1.setText(A.toString())
+        num2.setText(B.toString())
+
+        currentAction = MathActionType.MULTIPLE
+    }
+
+    private fun clearAnswerView(){
+        showCorrectAnswer.setText("")
+        answer.setText("")
+        answer.setBackgroundColor(Color.TRANSPARENT)
+    }
+
+    private fun addLevel() {
+        showCorrectAnswer.text = ""
+        level++
+        level1.text = level.toString()
+    }
+
+    private fun resetLevel() {
+        level = 1
+        level1.text = level.toString()
+    }
+
+    private fun showAnswer() {
+        showCorrectAnswer.text = correctAnswer.toString()
+    }
+
+    private fun onUserAnswer(){
+        val isRightAnswer=updateScore()
+        if (isRightAnswer){
+            answer.setBackgroundColor(resources.getColor((R.color.teal_200)));
+        }else{
+            answer.setBackgroundColor(resources.getColor((R.color.light_red)));
         }
 
+        answer.postDelayed ({
+            startNextExt()
+        }, 500)
+
+
     }
+}
+
+enum class MathActionType {
+    ADD, SUBTRACT, DIVIDE, MULTIPLE
 }
