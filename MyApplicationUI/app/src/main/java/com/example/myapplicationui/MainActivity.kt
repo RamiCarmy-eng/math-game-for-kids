@@ -1,103 +1,66 @@
 package com.example.myapplicationui
 
 import android.graphics.Color
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
-import kotlin.random.Random
-import android.widget.Button
-import android.widget.EditText
-import android.widget.ImageButton
-import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+import com.example.myapplicationui.databinding.ActivityMainBinding
 
 
 class MainActivity() : AppCompatActivity(), View.OnClickListener {
-    //TextView
-    lateinit var textScore: TextView
-    lateinit var scoreResult: TextView
-    lateinit var operator: TextView
-    lateinit var num1: TextView
-    lateinit var num2: TextView
-    lateinit var answer: EditText
-
-    //Buttons
-    lateinit var btnAdd: Button
-    lateinit var btnSubstract: Button
-    lateinit var btnMultiply: Button
-    lateinit var btnDivide: Button
-    lateinit var btnShowAnswer: Button
-    lateinit var btnAddLevel: ImageButton
-    lateinit var btnResetLevel: ImageButton
-    lateinit var showCorrectAnswer: TextView
-    lateinit var level1: TextView
-    lateinit var btnChack: ImageButton
+    private lateinit var binding: ActivityMainBinding
 
     //Varianles
-    var score: Int = 0
-    var correctAnswer: Int = 0
-    var playerAnswer: Int=0
-    var level: Int = 1
-    var A: Int = 0
-    var B: Int = 0
-    var currentAction : MathActionType = MathActionType.ADD
+    var gameHelper: GameHelper = GameHelper()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        val view = binding.root
+        setContentView(view)
 
-        scoreResult = findViewById(R.id.score_result)
-        btnShowAnswer = findViewById(R.id.btnShowAnswer)
-        btnAdd = findViewById(R.id.btnAdd)
-        btnSubstract = findViewById(R.id.btnSubstract)
-        btnMultiply = findViewById(R.id.btnMultiply)
-        btnDivide = findViewById(R.id.btnDivide)
-        textScore = findViewById(R.id.score_title)
-        level1 = findViewById(R.id.level)
-        operator = findViewById(R.id.operator)
-        num1 = findViewById(R.id.num1)
-        num2 = findViewById(R.id.num2)
-        btnAddLevel = findViewById(R.id.btnAddLevel)
-        btnResetLevel = findViewById(R.id.btnRestLevel)
-        showCorrectAnswer = findViewById(R.id.correctAnswerView)
-        answer = findViewById(R.id.user_answer)
-        btnChack = findViewById(R.id.check_button)
-        btnAdd.setOnClickListener(this)
-        btnSubstract.setOnClickListener(this)
-        btnShowAnswer.setOnClickListener(this)
-        btnMultiply.setOnClickListener(this)
-        btnDivide.setOnClickListener(this)
-        level1.setOnClickListener(this)
-        btnResetLevel.setOnClickListener(this)
-        btnAddLevel.setOnClickListener(this)
-        btnChack.setOnClickListener(this)
-
-        startGame()
-
-    }
-
-    fun rand(start: Int, end: Int): Int {
-        require(start <= end) { "Illegal Argument" }
-        val rand = Random(System.nanoTime())
-        return (start..end).random(rand)
-    }
-
-    fun endNNumber(level: Int): Int {
-        return level * 10
-    }
-
-    fun updateScore():Boolean {
-        var result: String=answer.text.toString()
-        if(result==correctAnswer.toString()) {
-            score++
-            scoreResult.text = score.toString()
-            return true
-        } else {
-            score--
-            scoreResult.text = score.toString()
-            return false
+        binding.apply {
+            btnAdd.setOnClickListener(this@MainActivity)
+            btnSubstract.setOnClickListener(this@MainActivity)
+            btnShowAnswer.setOnClickListener(this@MainActivity)
+            btnMultiply.setOnClickListener(this@MainActivity)
+            btnDivide.setOnClickListener(this@MainActivity)
+            level.setOnClickListener(this@MainActivity)
+            btnRestLevel.setOnClickListener(this@MainActivity)
+            btnAddLevel.setOnClickListener(this@MainActivity)
+            checkButton.setOnClickListener(this@MainActivity)
         }
 
+        if(savedInstanceState == null) {
+            startGame()
+        }
 
+    }
+
+    override fun onSaveInstanceState(savedInstanceState: Bundle) {
+        super.onSaveInstanceState(savedInstanceState)
+        savedInstanceState.putSerializable("GameHelper", gameHelper)
+    }
+
+    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+        super.onRestoreInstanceState(savedInstanceState)
+        gameHelper = savedInstanceState.getSerializable("GameHelper") as GameHelper
+        updateFields()
+    }
+
+    private fun updateFields() {
+        binding.operator.text = when(gameHelper.currentAction) {
+            MathActionType.ADD -> "+"
+            MathActionType.SUBTRACT -> "-"
+            MathActionType.MULTIPLE -> "*"
+            MathActionType.DIVIDE -> "/"
+        }
+        binding.num1.text = gameHelper.ext.a.toString()
+        binding.num2.text = gameHelper.ext.b.toString()
+
+        binding.scoreResult.text = gameHelper.score.toString()
+
+        binding.level.text = gameHelper.level.toString()
     }
 
     override fun onClick(v: View) {
@@ -114,142 +77,81 @@ class MainActivity() : AppCompatActivity(), View.OnClickListener {
     }
 
     private fun startGame() {
-        startNextExt()
-        answer.requestFocus()
-    }
-
-    private fun startNextExt() {
-        when (currentAction) {
-            MathActionType.ADD -> chooseAdd()
-            MathActionType.SUBTRACT -> chooseSubtract()
-            MathActionType.MULTIPLE -> chooseMultiply()
-            MathActionType.DIVIDE -> chooseDivide()
-        }
+        getNextAnswer()
+        binding.userAnswer.requestFocus()
     }
 
     private fun chooseAdd() {
-        clearAnswerView()
-
-        val start: Int = 0
-        val end: Int = endNNumber(level)
-
-        operator.setText("+")
-        A = rand(start, end)
-        if (A != end) {
-            while (B <= end) {
-                B = rand(start, end)
-                if ((A + B) <= end) {
-                    correctAnswer = A + B
-                    break
-                }
-
-            }
-            num1.setText(A.toString())
-            num2.setText(B.toString())
-
-            currentAction = MathActionType.ADD
-        }
+        gameHelper.currentAction = MathActionType.ADD
+        getNextAnswer()
     }
 
     private fun chooseSubtract() {
-        clearAnswerView()
-
-        val start: Int = 0
-        val end: Int = endNNumber(level)
-
-        operator.setText("-")
-        A = rand(start, end)
-        if (A != end) {
-            B = rand(start, A)
-            correctAnswer = A - B
-        }
-        num1.setText(A.toString())
-        num2.setText(B.toString())
-
-        currentAction = MathActionType.SUBTRACT
+        gameHelper.currentAction = MathActionType.SUBTRACT
+        getNextAnswer()
     }
 
     private fun chooseDivide(){
-        clearAnswerView()
-
-        val start: Int = 0
-        val end: Int = endNNumber(level)
-
-        showCorrectAnswer.setText("")
-        operator.setText("/")
-        A = rand(start, end)
-        var finish: Boolean=true
-        while (finish) {
-            B = rand(1, A)
-            correctAnswer = A / B
-            if((A.rem(B))==0){
-                finish=false
-            }
-        }
-        num1.setText(A.toString())
-        num2.setText(B.toString())
-
-        currentAction = MathActionType.DIVIDE
+        gameHelper.currentAction = MathActionType.DIVIDE
+        getNextAnswer()
     }
 
     private fun chooseMultiply() {
+        gameHelper.currentAction = MathActionType.MULTIPLE
+        getNextAnswer()
+    }
+
+    private fun getNextAnswer() {
         clearAnswerView()
-
-        val start: Int = 0
-        val end: Int = endNNumber(level)
-
-        showCorrectAnswer.setText("")
-        operator.setText("*")
-        A = rand(start, end)
-        var finish: Boolean=true
-        while (finish) {
-            B = rand(0, end)
-            correctAnswer = A * B
-            if((A*B)<=end){
-                finish=false
-            }
-        }
-        num1.setText(A.toString())
-        num2.setText(B.toString())
-
-        currentAction = MathActionType.MULTIPLE
+        gameHelper.getNextExt()
+        updateFields()
     }
 
     private fun clearAnswerView(){
-        showCorrectAnswer.setText("")
-        answer.setText("")
-        answer.setBackgroundColor(Color.TRANSPARENT)
+        binding.correctAnswerView.setText("")
+        binding.userAnswer.setText("")
+        binding.userAnswer.setBackgroundColor(Color.TRANSPARENT)
     }
 
     private fun addLevel() {
-        showCorrectAnswer.text = ""
-        level++
-        level1.text = level.toString()
+        gameHelper.level = gameHelper.level + 1
+        updateFields()
     }
 
     private fun resetLevel() {
-        level = 1
-        level1.text = level.toString()
+        gameHelper.level = 1
+        updateFields()
     }
 
     private fun showAnswer() {
-        showCorrectAnswer.text = correctAnswer.toString()
+        binding.correctAnswerView.text = gameHelper.ext.ans.toString()
     }
 
     private fun onUserAnswer(){
-        val isRightAnswer=updateScore()
-        if (isRightAnswer){
-            answer.setBackgroundColor(resources.getColor((R.color.teal_200)));
-        }else{
-            answer.setBackgroundColor(resources.getColor((R.color.light_red)));
+        if(binding.userAnswer.text.isNullOrEmpty()) return
+
+        val isRightAnswer=gameHelper.isRightAnswer(binding.userAnswer.text.toString().toInt())
+
+        if(isRightAnswer) {
+            gameHelper.score = gameHelper.score + 1
+        } else {
+            gameHelper.score = gameHelper.score - 1
         }
 
-        answer.postDelayed ({
-            startNextExt()
+        updateFields()
+
+        if (isRightAnswer){
+            binding.userAnswer.setBackgroundColor(resources.getColor((R.color.teal_200)));
+        }else{
+            binding.userAnswer.setBackgroundColor(resources.getColor((R.color.light_red)));
+        }
+
+        binding.userAnswer.postDelayed ({
+            getNextAnswer()
         }, 500)
-
-
     }
+
+
 }
 
 enum class MathActionType {
